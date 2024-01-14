@@ -1,0 +1,99 @@
+# Idealistats
+
+```elixir
+Mix.install([
+  {:fast64, "~> 0.1.3"},
+  {:tesla, "~> 1.8.0"},
+  {:explorer, "~> 0.7.2"},
+  {:kino_vega_lite, "~> 0.1.11"},
+  {:jason, "~> 1.4.1"},
+  {:kino_maplibre, "~> 0.1.10"},
+  {:idealistats, path: __DIR__}
+])
+```
+
+## ID and secret
+
+```elixir
+auth =
+  File.read!("#{__DIR__}/auth.json")
+  |> Jason.decode!(keys: :atoms)
+
+# URL to get token
+access_token_url = "https://api.idealista.com/oauth/token"
+
+:ok
+```
+
+## Getting Auth Token
+
+```elixir
+auth
+|> Auth.get_header()
+|> Auth.get_token()
+```
+
+## Getting Data from Idealista
+
+```elixir
+res =
+  %{"elementList" => elements} =
+  Auth.get_header(auth)
+  |> Auth.get_token()
+  |> Idealistats.get_page(1)
+
+Map.drop(res, ["elementList"])
+```
+
+```elixir
+username = Kino.Input.select("Language", en: "English", fr: "Français") |> Kino.render()
+password = Kino.Input.select("Language", en: "English", fr: "Français") |> Kino.render()
+Kino.nothing()
+
+u = username |> Kino.Control.stream() |> Kino.listen(fn event -> event.value end)
+p = password |> Kino.Control.stream() |> Kino.listen(fn event -> event.value end)
+```
+
+```elixir
+[username, password]
+|> Kino.Control.stream()
+|> Kino.listen(fn event ->
+  IO.inspect(event)
+end)
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+{u, p}
+```
+
+```elixir
+{la, lo} =
+  elements
+  |> Enum.filter(fn element -> element["latitude"] != nil and element["longitude"] != nil end)
+  |> Enum.map(fn p ->
+    %{"latitude" => la, "longitude" => lo} = Map.take(p, ["latitude", "longitude"])
+
+    {la, lo}
+  end)
+  |> Enum.unzip()
+
+:ok
+```
+
+```elixir
+homes = %{"longitude" => lo, "latitude" => la}
+
+lo_avg = Enum.sum(lo) / Enum.count(lo)
+la_avg = Enum.sum(la) / Enum.count(la)
+
+MapLibre.new(center: {lo_avg, la_avg}, zoom: 8, style: :street)
+|> MapLibre.add_table_source("homes", homes, {:lng_lat, ["longitude", "latitude"]})
+|> MapLibre.add_layer(
+  id: "homes",
+  type: :circle,
+  # type: :heatmap,
+  source: "homes"
+)
+```
