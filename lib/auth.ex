@@ -14,15 +14,16 @@ defmodule Auth do
       - `id`: String with the authentication name.
       - `secret`: String with the authentication secret.
   """
-  @spec get_header(%{id: String.t(), secret: String.t()} | none()) :: String.t()
+  @spec get_header() :: String.t()
   def get_header() do
     File.read!("#{__DIR__}/../auth.json")
     |> Jason.decode!(keys: :atoms)
     |> get_header()
   end
 
+  @spec get_header(%{id: String.t(), secret: String.t()}) :: String.t()
   def get_header(auth) do
-    encodedBytes = Fast64.encode64(auth.id <> ":" <> auth.secret)
+    encodedBytes = Base.encode64(auth.id <> ":" <> auth.secret)
     "Basic #{encodedBytes}"
   end
 

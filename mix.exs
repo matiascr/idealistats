@@ -21,10 +21,11 @@ defmodule Idealistats.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:fast64, "~> 0.1.3"},
-      {:tesla, "~> 1.8.0"},
       {:jason, "~> 1.4.1"},
-      {:nimble_options, "~> 1.0"}
+      {:nimble_options, "~> 1.0"},
+      {:tesla, "~> 1.8.0"}
     ]
   end
 end

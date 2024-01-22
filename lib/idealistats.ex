@@ -89,7 +89,8 @@ defmodule Idealistats do
 
   #{NimbleOptions.docs(@opts_schema)}
   """
-  @spec get_page(token :: String.t(), page :: integer(), opts :: map()) :: term() | no_return()
+  @spec get_page(token :: String.t(), page :: integer(), opts :: keyword()) ::
+          term() | no_return()
   def get_page(token, page, opts) do
     query = NimbleOptions.validate!(opts, @opts_schema) |> Keyword.put(:numPage, page)
 
