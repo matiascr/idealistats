@@ -3,6 +3,8 @@ defmodule Auth do
   Provides an interface with Idealista.com
   """
 
+  @token_url "https://api.idealista.com/oauth/token"
+
   @doc """
   Returns the authentication header.
 
@@ -12,10 +14,16 @@ defmodule Auth do
       - `id`: String with the authentication name.
       - `secret`: String with the authentication secret.
   """
-  @spec get_header(%{id: String.t(), secret: String.t()}) :: String.t()
+  @spec get_header(%{id: String.t(), secret: String.t()} | none()) :: String.t()
+  def get_header() do
+    File.read!("#{__DIR__}/../auth.json")
+    |> Jason.decode!(keys: :atoms)
+    |> get_header()
+  end
+
   def get_header(auth) do
     encodedBytes = Fast64.encode64(auth.id <> ":" <> auth.secret)
-    "Basic " <> encodedBytes
+    "Basic #{encodedBytes}"
   end
 
   @doc """
@@ -29,7 +37,7 @@ defmodule Auth do
   def get_token(auth_header) do
     {:ok, %{body: body}} =
       Tesla.post(
-        "https://api.idealista.com/oauth/token",
+        @token_url,
         "",
         query: [
           grant_type: "client_credentials",
