@@ -13,30 +13,68 @@ Mix.install([
 ])
 ```
 
-## ID and secret
+## Search options
 
 ```elixir
-auth = File.read!("#{__DIR__}/auth.json") |> Jason.decode!(keys: :atoms)
-```
-
-## Getting auth token
-
-```elixir
-auth
-|> Auth.get_header()
-|> Auth.get_token()
+args =
+  [
+    country:
+      Kino.Input.select(
+        "Country",
+        [
+          {"es", "Spain"},
+          {"it", "Italy"},
+          {"pt", "Portugal"}
+        ]
+      ),
+    operation:
+      Kino.Input.select(
+        "Operation",
+        [
+          {"sale", "Sale"},
+          {"rent", "Rent"}
+        ]
+      ),
+    propertyType:
+      Kino.Input.select(
+        "Property Type",
+        [
+          {"homes", "Homes"},
+          {"offices", "Offices"},
+          {"premises", "Premise"},
+          {"garages", "Garages"},
+          {"bedrooms", "Bedrooms"}
+        ]
+      ),
+    locationId:
+      Kino.Input.select(
+        "Location Id",
+        Enum.map(1..56, &{"0-EU-ES-#{&1}", "0-EU-ES-#{&1}"})
+      )
+  ]
+  |> Enum.map(fn {key, value} ->
+    {key,
+     value
+     |> Kino.render()
+     |> Kino.Input.read()}
+  end)
 ```
 
 ## Getting data from Idealista
 
 ```elixir
 (res = %{"elementList" => elements}) =
-  Auth.get_header(auth)
+  Auth.get_header()
   |> Auth.get_token()
-  |> Idealistats.get_page(1, operation: "sale", propertyType: "homes", locationId: "0-EU-ES-28")
+  |> Idealistats.get_page(
+    1,
+    args
+  )
 
-Map.drop(res, ["elementList"])
+:ok
 ```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
 
 ```elixir
 {la, lo} =
@@ -51,6 +89,8 @@ Map.drop(res, ["elementList"])
 
 :ok
 ```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
 
 ```elixir
 homes = %{"longitude" => lo, "latitude" => la}
