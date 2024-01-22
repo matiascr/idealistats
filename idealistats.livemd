@@ -8,6 +8,7 @@ Mix.install([
   {:kino_vega_lite, "~> 0.1.11"},
   {:jason, "~> 1.4.1"},
   {:kino_maplibre, "~> 0.1.10"},
+  {:nimble_options, "~> 1.0"},
   {:idealistats, path: __DIR__}
 ])
 ```
@@ -15,17 +16,10 @@ Mix.install([
 ## ID and secret
 
 ```elixir
-auth =
-  File.read!("#{__DIR__}/auth.json")
-  |> Jason.decode!(keys: :atoms)
-
-# URL to get token
-access_token_url = "https://api.idealista.com/oauth/token"
-
-:ok
+auth = File.read!("#{__DIR__}/auth.json") |> Jason.decode!(keys: :atoms)
 ```
 
-## Getting Auth Token
+## Getting auth token
 
 ```elixir
 auth
@@ -33,39 +27,15 @@ auth
 |> Auth.get_token()
 ```
 
-## Getting Data from Idealista
+## Getting data from Idealista
 
 ```elixir
-res =
-  %{"elementList" => elements} =
+(res = %{"elementList" => elements}) =
   Auth.get_header(auth)
   |> Auth.get_token()
-  |> Idealistats.get_page(1)
+  |> Idealistats.get_page(1, operation: "sale", propertyType: "homes", locationId: "0-EU-ES-28")
 
 Map.drop(res, ["elementList"])
-```
-
-```elixir
-username = Kino.Input.select("Language", en: "English", fr: "Français") |> Kino.render()
-password = Kino.Input.select("Language", en: "English", fr: "Français") |> Kino.render()
-Kino.nothing()
-
-u = username |> Kino.Control.stream() |> Kino.listen(fn event -> event.value end)
-p = password |> Kino.Control.stream() |> Kino.listen(fn event -> event.value end)
-```
-
-```elixir
-[username, password]
-|> Kino.Control.stream()
-|> Kino.listen(fn event ->
-  IO.inspect(event)
-end)
-```
-
-<!-- livebook:{"reevaluate_automatically":true} -->
-
-```elixir
-{u, p}
 ```
 
 ```elixir
@@ -85,8 +55,10 @@ end)
 ```elixir
 homes = %{"longitude" => lo, "latitude" => la}
 
-lo_avg = Enum.sum(lo) / Enum.count(lo)
-la_avg = Enum.sum(la) / Enum.count(la)
+avg = &(Enum.sum(&1) / Enum.count(&1))
+
+lo_avg = avg.(lo)
+la_avg = avg.(la)
 
 MapLibre.new(center: {lo_avg, la_avg}, zoom: 8, style: :street)
 |> MapLibre.add_table_source("homes", homes, {:lng_lat, ["longitude", "latitude"]})
